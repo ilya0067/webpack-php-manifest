@@ -9,6 +9,38 @@ function PhpManifestPlugin (options) {
 
 const optionOrFallback = (optionValue, fallbackValue) => optionValue !== undefined ? optionValue : fallbackValue;
 
+const withPrefix = (prefix) => (ext) => (assets, filepath) =>
+  Object.keys(assets)
+    .reduce((acc, name) => {
+      // Most of the time the properties of `assets` are just strings (the
+      // path to the created chunk) but sometimes (mostly for styles
+      // when using ExtractTextPlugin) a property can be an array containing
+      // several paths (i.e. ['styles.css', 'styles.js']).
+      let chunk = ((_.isArray(assets[name])) ? assets[name] : [assets[name]])
+        .filter(function (filename) {
+          return filename.endsWith(ext);
+        })
+        // Here we're assuming that you only want one of the
+        // paths in the array. Basically, this assertion should hold:
+        // .map((v, k, a) => {
+        //   if (a.length !== 1) {
+        //     throw new Error("Unexpected number of filenames for chunk.");
+        //   }
+        //   return v;
+        // })
+        .reduce(function (_, filename) {
+          return (!prefix)
+            ? path.join(filepath, filename)
+            : url.resolve(prefix, path.join(filepath, filename));
+        }, undefined);
+
+      if (chunk) {
+        acc[name] = chunk;
+      }
+
+      return acc;
+    }, {});
+
 PhpManifestPlugin.prototype.apply = function apply (compiler) {
   var options = this.options;
   // Get webpack options
@@ -16,44 +48,29 @@ PhpManifestPlugin.prototype.apply = function apply (compiler) {
   // Public path (like www), used when writing the file
   var prefix = options.pathPrefix ? options.pathPrefix : '';
   // By default, build the file with node fs. Can be included in webpack with an option.
-  var webpackBuild = options.webpackBuild ? options.webpackBuild : false;
   var output = optionOrFallback(options.output, 'assets-manifest') + '.php';
 
   var phpClassName = optionOrFallback(options.phpClassName, 'WebpackBuiltFiles');
 
-  var getCssFiles = function(filelist, filepath) {
-    return _.map(_.filter(filelist, function (filename) {
-      return filename.endsWith('.css');
-    }), function(filename) {
-      if (!prefix) return path.join(filepath, filename);
-
-      // Return url prefixed path if url exists
-      return url.resolve(prefix, path.join(filepath, filename));
-    });
-  };
-
-  var getJsFiles = function(filelist, filepath) {
-    const files = _.map(_.filter(filelist, function (filename) {
-      return filename.endsWith('.js');
-    }), function(filename) {
-      if (!prefix) return path.join(filepath, filename);
-
-      // Return url prefixed path if url exists
-      return url.resolve(prefix, path.join(filepath, filename));
-    });
+  var withExtension = withPrefix(prefix);
+  var getCssFiles = withExtension('.css');
+  var getJsFiles = function (assets, filepath) {
+    var files = withExtension('.js')(assets, filepath);
 
     // Add webpack-dev-server js url
-    if (options.devServer) files.push(url.resolve(prefix, 'webpack-dev-server.js'));
+    if (options.devServer) {
+      files['webpack-dev-server'] = url.resolve(prefix, 'webpack-dev-server.js');
+    }
 
     return files;
-  };
+  }
 
   var arrayToPhpStatic = function(list, varname) {
-    var out = '  static $' + varname + ' = [\n'
-    _.forEach(list, function (item) {
-      out += "    '" + item + "',";
+    var out = '\n  static $' + varname + ' = ['
+    _.forEach(list, function (item, name) {
+      out += "\n    '" + name + "' => '" + item + "',";
     });
-    out += '\n  ];\n';
+    out += '\n  ];';
     return out;
   };
 
@@ -65,7 +82,7 @@ PhpManifestPlugin.prototype.apply = function apply (compiler) {
     // Create a header string for the generated file:
     var out = '<?php\n'
       + phpClassComment(phpClassName)
-      + 'class ' + phpClassName + ' {\n';
+      + 'class ' + phpClassName + ' {';
 
     _.forEach(obj, function (list, name) {
       out += arrayToPhpStatic(list, name);
@@ -85,22 +102,13 @@ PhpManifestPlugin.prototype.apply = function apply (compiler) {
     }
   }
 
-  // Get output path from webpack
-  var buildPath = compiler.options.output.path;
-
   compiler.plugin('emit', function(compilation, callback) {
 
     var stats = compilation.getStats().toJson();
-    var toInclude = [];
-
-    // Flatten the chunks (lists of files) to one list
-    for (var chunkName in stats.assetsByChunkName) {
-      toInclude = _.union(toInclude, stats.assetsByChunkName[chunkName]);
-    }
 
     var out = objectToPhpClass(phpClassName, {
-      jsFiles: getJsFiles(toInclude, filepath),
-      cssFiles: getCssFiles(toInclude, filepath)
+      jsFiles: getJsFiles(stats.assetsByChunkName, filepath),
+      cssFiles: getCssFiles(stats.assetsByChunkName, filepath),
     });
 
     // Write file using fs
