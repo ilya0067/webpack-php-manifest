@@ -30,8 +30,8 @@ const withPrefix = (prefix) => (ext) => (assets, filepath) =>
         // })
         .reduce(function (_, filename) {
           return (!prefix)
-            ? path.join(filepath, filename)
-            : url.resolve(prefix, path.join(filepath, filename));
+            ? path.posix.join(filepath, filename)
+            : url.resolve(prefix, path.posix.join(filepath, filename));
         }, undefined);
 
       if (chunk) {
