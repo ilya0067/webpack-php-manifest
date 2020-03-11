@@ -1,6 +1,6 @@
 {
   "name": "webpack-php-manifest",
-  "version": "0.0.7",
+  "version": "0.0.8",
   "description": "Writes output file names to a PHP file.",
   "main": "index.js",
   "bugs": "https://github.com/castiron/webpack-php-manifest/issues",
