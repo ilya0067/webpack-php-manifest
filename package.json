@@ -1,11 +1,11 @@
 {
   "name": "webpack-php-manifest",
-  "version": "0.0.6",
+  "version": "0.0.7",
   "description": "Writes output file names to a PHP file.",
   "main": "index.js",
   "bugs": "https://github.com/castiron/webpack-php-manifest/issues",
   "homepage": "https://github.com/castiron/webpack-php-manifest",
-  "repository": "https://github.com/jantimon/castiron/webpack-php-manifest",
+  "repository": "https://github.com/castiron/webpack-php-manifest",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1"
   },

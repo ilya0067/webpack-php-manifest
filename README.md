@@ -2,7 +2,7 @@
 
 ## PHP Manifest from Webpack
 
-_Please note this module depends on webpack 2+._
+_Please note this module depends on webpack 4+._
 
 This webpack plugin will create a PHP file in your `output.path` directory with a PHP class in it having two static
 attributes: `$jsFiles` and `$cssFiles`. These can be accessed by your PHP application to learn about what to include
