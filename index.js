@@ -42,6 +42,8 @@ const withPrefix = (prefix) => (ext) => (assets, filepath) =>
     }, {});
 
 PhpManifestPlugin.prototype.apply = function apply (compiler) {
+
+
   var options = this.options;
   // Get webpack options
   var filepath = options.path ? options.path : '';
@@ -102,7 +104,7 @@ PhpManifestPlugin.prototype.apply = function apply (compiler) {
     }
   }
 
-  compiler.plugin('emit', function(compilation, callback) {
+  compiler.hooks.afterEmit.tap("WepackPhpManifestPlugin", (compilation, done) => {
 
     var stats = compilation.getStats().toJson();
 
@@ -114,9 +116,8 @@ PhpManifestPlugin.prototype.apply = function apply (compiler) {
     // Write file using fs
     // Build directory if it doesn't exist
     mkOutputDir(path.resolve(compiler.options.output.path));
-    fs.writeFileSync(path.join(compiler.options.output.path, output), out);
+    fs.writeFileSync(path.join(compiler.options.output.path, output), out, done);
 
-    callback();
   });
 };
 
