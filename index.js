@@ -81,11 +81,12 @@ PhpManifestPlugin.prototype.apply = function apply (compiler) {
   }
 
   var objectToPhpClass = function(phpClassName, obj) {
+    let namespace = optionOrFallback(options.phpNamespace, false)
     // Create a header string for the generated file:
-    var out = '<?php\n'
-      + phpClassComment(phpClassName)
+    var out = '<?php\n';
+    if(namespace) out += 'namespace ' + namespace + ';\n'
+    out += phpClassComment(phpClassName)
       + 'class ' + phpClassName + ' {';
-
     _.forEach(obj, function (list, name) {
       out += arrayToPhpStatic(list, name);
     });
