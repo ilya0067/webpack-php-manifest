@@ -1,6 +1,6 @@
 {
   "name": "webpack-php-manifest",
-  "version": "0.0.8",
+  "version": "0.0.9",
   "description": "Writes output file names to a PHP file.",
   "main": "index.js",
   "bugs": "https://github.com/castiron/webpack-php-manifest/issues",
@@ -17,7 +17,7 @@
     "lodash": "^4.17.4"
   },
   "peerDependencies": {
-    "webpack": "^4.0.0"
+    "webpack": "^5.0.0"
   },
   "author": "Gabe Blair <gabe@castironcoding.com>",
   "license": "MIT"
